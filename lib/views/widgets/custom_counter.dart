@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce_app/models/product_item_model.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CustomCounter extends StatelessWidget {
   const CustomCounter({
@@ -17,16 +18,25 @@ class CustomCounter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(18.0),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            InkWell(
+            GestureDetector(
               onTap: () {
                 if (value > 1) {
                   initialValue != null
@@ -34,30 +44,58 @@ class CustomCounter extends StatelessWidget {
                       : cubit.decrement(product.id);
                 }
               },
-              child: const CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.remove),
+              child: Container(
+                height: 32.h,
+                width: 32.w,
+                decoration: BoxDecoration(
+                  color: value > 1
+                      ? Colors.deepPurple.withOpacity(0.1)
+                      : Colors.grey[200],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.remove,
+                  color: value > 1 ? Colors.deepPurple : Colors.grey,
+                  size: 18.sp,
+                ),
               ),
             ),
-            const SizedBox(width: 15),
+            SizedBox(width: 16.w),
             Text(
               value.toString(),
-              style: const TextStyle(
-                fontSize: 18,
-                color: Colors.black,
+              style: TextStyle(
+                fontSize: 18.sp,
+                color: Colors.black87,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(width: 15),
-            CircleAvatar(
-              backgroundColor: Colors.white,
-              child: InkWell(
-                onTap: () {
-                  initialValue != null
-                      ? cubit.increment(product.id, initialValue)
-                      : cubit.increment(product.id);
-                },
-                child: const Icon(Icons.add),
+            SizedBox(width: 16.w),
+            GestureDetector(
+              onTap: () {
+                initialValue != null
+                    ? cubit.increment(product.id, initialValue)
+                    : cubit.increment(product.id);
+              },
+              child: Container(
+                height: 32.h,
+                width: 32.w,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.deepPurple,
+                      Colors.deepPurple.withOpacity(0.8),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.deepPurple.withOpacity(0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(Icons.add, color: Colors.white, size: 18.sp),
               ),
             ),
           ],

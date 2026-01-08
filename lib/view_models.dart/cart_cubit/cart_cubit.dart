@@ -1,6 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ecommerce_app/models/add_to_cart_model.dart';
 import 'package:flutter_ecommerce_app/services/cart_service.dart';
+import 'package:flutter_ecommerce_app/services/auth_service.dart';
+import 'package:flutter_ecommerce_app/services/firestore_services.dart';
+import 'package:flutter_ecommerce_app/utils/api_path.dart';
 
 part 'cart_state.dart';
 
@@ -10,6 +13,8 @@ class CartCubit extends Cubit<CartState> {
   double totalPrice = 0;
 
   final CartServiceImpl cartServiceImpl = CartServiceImpl();
+  final AuthServiceImpl _authService = AuthServiceImpl();
+  final FirestoreServices _firestoreServices = FirestoreServices.instance;
 
   Future<void> fetchCartItems() async {
     emit(CartLoading());
@@ -23,6 +28,29 @@ class CartCubit extends Cubit<CartState> {
       emit(CartSuccess(cartItems, totalPrice));
     } catch (e) {
       emit(CartFaliure(e.toString()));
+    }
+  }
+
+  Future<void> deleteFromCart(String cartItemId) async {
+    try {
+      emit(DeleteFromCartLoading());
+
+      final userId = _authService.getCurrentUser()?.uid;
+      if (userId == null) {
+        emit(DeleteFromCartFailure("User not authenticated"));
+        return;
+      }
+
+      await _firestoreServices.deleteData(
+        path: ApiPath.addToCart(userId, cartItemId),
+      );
+
+      emit(DeleteFromCartSuccess());
+
+      // Refresh cart items after deletion
+      await fetchCartItems();
+    } catch (e) {
+      emit(DeleteFromCartFailure(e.toString()));
     }
   }
 
@@ -41,13 +69,20 @@ class CartCubit extends Cubit<CartState> {
       final cartItem = cartItems[index];
 
       int currentQuantity = initialValue ?? cartItem.quantity;
+
+      // If quantity is 1, delete the item instead of decrementing
+      if (currentQuantity <= 1) {
+        await deleteFromCart(cartItem.id);
+        return;
+      }
+
       currentQuantity--;
       double currentPrice = cartItem.productId.price * currentQuantity;
 
       final updatedCartItem = cartItem.copyWith(quantity: currentQuantity);
       cartItems[index] = updatedCartItem;
 
-      cartServiceImpl.decreaseQuantity(updatedCartItem);
+      await cartServiceImpl.decreaseQuantity(updatedCartItem);
 
       emit(QuantityCounterLoaded(currentQuantity, id, currentPrice));
       double totalPrice = cartItems.fold(
@@ -99,6 +134,31 @@ class CartCubit extends Cubit<CartState> {
     } catch (e) {
       emit(CartFaliure("Error updating quantity: ${e.toString()}"));
       emit(IncrementFailure(e.toString()));
+    }
+  }
+
+  Future<void> clearCart() async {
+    try {
+      emit(ClearCartLoading());
+
+      final userId = _authService.getCurrentUser()?.uid;
+      if (userId == null) {
+        emit(ClearCartFailure("User not authenticated"));
+        return;
+      }
+
+      final cartItems = await cartServiceImpl.getCartItems();
+
+      for (var item in cartItems) {
+        await _firestoreServices.deleteData(
+          path: ApiPath.addToCart(userId, item.id),
+        );
+      }
+
+      emit(ClearCartSuccess());
+      await fetchCartItems();
+    } catch (e) {
+      emit(ClearCartFailure(e.toString()));
     }
   }
 }

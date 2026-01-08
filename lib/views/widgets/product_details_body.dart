@@ -2,9 +2,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ecommerce_app/models/product_item_model.dart';
-import 'package:flutter_ecommerce_app/utils/app_colors.dart';
 import 'package:flutter_ecommerce_app/view_models.dart/prdouct_cubit/product_cubit.dart';
 import 'package:flutter_ecommerce_app/views/widgets/custom_counter.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ProductDetailsBody extends StatelessWidget {
   const ProductDetailsBody({
@@ -18,70 +18,127 @@ class ProductDetailsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Stack(
-        children: [
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(color: Colors.grey.shade300),
-            child: Column(
-              children: [
-                SizedBox(height: size.height * 0.15),
-                CachedNetworkImage(
-                  imageUrl: product.imgUrl,
-                  height: size.height * 0.3,
+    return Stack(
+      children: [
+        // Image Section
+        Container(
+          height: size.height * 0.45,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.grey[200]!, Colors.grey[100]!],
+            ),
+          ),
+          child: Hero(
+            tag: 'product_${product.id}',
+            child: CachedNetworkImage(
+              imageUrl: product.imgUrl,
+              fit: BoxFit.contain,
+              placeholder: (context, url) => const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Bottom Sheet
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: size.height * 0.58,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, -5),
                 ),
               ],
             ),
-          ),
-          Positioned(
-            bottom: 0,
-            child: Container(
-              height: size.height * 0.55,
-              width: size.width,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
-                ),
-              ),
+            child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: EdgeInsets.all(24.r),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              product.name,
-                              style: Theme.of(context).textTheme.headlineSmall!
-                                  .copyWith(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                const Icon(Icons.star, color: AppColors.yellow),
-                                Text(
-                                  " ${product.averageRate}",
-                                  style: Theme.of(context).textTheme.titleLarge!
-                                      .copyWith(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ],
+                    // Drag Indicator
+                    Center(
+                      child: Container(
+                        width: 40.w,
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2.r),
                         ),
-                        const Spacer(),
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+
+                    // Product Name and Rating
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                product.name,
+                                style: TextStyle(
+                                  fontSize: 24.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 6.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20.r),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.star,
+                                      color: Colors.amber,
+                                      size: 18.sp,
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      product.averageRate.toString(),
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      "(120 reviews)",
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         BlocBuilder<ProductCubit, ProductCubitState>(
                           buildWhen: (previous, current) =>
                               current is QuantityCounterLoaded ||
@@ -99,194 +156,285 @@ class ProductDetailsBody extends StatelessWidget {
                                 cubit: BlocProvider.of<ProductCubit>(context),
                                 value: 1,
                               );
-                            } else {
-                              return const SizedBox();
                             }
+                            return const SizedBox();
                           },
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 24.h),
+
+                    // Size Selection
                     Text(
-                      "Size",
-                      style: Theme.of(context).textTheme.headlineSmall!
-                          .copyWith(fontWeight: FontWeight.w600),
+                      "Select Size",
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
+                    SizedBox(height: 12.h),
                     BlocBuilder<ProductCubit, ProductCubitState>(
                       builder: (context, state) {
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: ProductSize.values
-                              .map(
-                                (size) => Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: InkWell(
-                                    onTap: () {
-                                      BlocProvider.of<ProductCubit>(
-                                        context,
-                                      ).selectSize(size);
-                                    },
-                                    child: Container(
-                                      height: 40,
-                                      width: 40,
-                                      decoration: BoxDecoration(
-                                        color:
-                                            state is Sizeselected &&
-                                                state.size == size
-                                            ? AppColors.primary
-                                            : Colors.grey.shade300,
-                                        shape: BoxShape.circle,
+                        return Wrap(
+                          spacing: 12.w,
+                          runSpacing: 12.h,
+                          children: ProductSize.values.map((size) {
+                            final isSelected =
+                                state is Sizeselected && state.size == size;
+                            return GestureDetector(
+                              onTap: () {
+                                BlocProvider.of<ProductCubit>(
+                                  context,
+                                ).selectSize(size);
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                height: 50.h,
+                                width: 50.w,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? Colors.deepPurple
+                                      : Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? Colors.deepPurple
+                                        : Colors.grey[300]!,
+                                    width: 2,
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.deepPurple
+                                                .withOpacity(0.3),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : [],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    size.name.toUpperCase(),
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.black87,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                    SizedBox(height: 24.h),
+
+                    // Description
+                    Text(
+                      "Description",
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    Text(
+                      product.description,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.grey[600],
+                        height: 1.5,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 30.h),
+
+                    // Price and Add to Cart
+                    Container(
+                      padding: EdgeInsets.all(16.r),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Total Price",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                "\$${product.price.toStringAsFixed(2)}",
+                                style: TextStyle(
+                                  fontSize: 28.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepPurple,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(width: 16.w),
+                          Expanded(
+                            child: BlocBuilder<ProductCubit, ProductCubitState>(
+                              builder: (context, state) {
+                                if (state is AddToCartLoading) {
+                                  return Container(
+                                    height: 56.h,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.deepPurple,
+                                          Colors.deepPurple.withOpacity(0.8),
+                                        ],
                                       ),
-                                      child: Center(
-                                        child: Text(
-                                          size.name.toUpperCase(),
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyLarge!
-                                              .copyWith(
-                                                color:
-                                                    state is Sizeselected &&
-                                                        state.size == size
-                                                    ? Colors.white
-                                                    : Colors.black,
-                                                fontWeight: FontWeight.w400,
+                                      borderRadius: BorderRadius.circular(16.r),
+                                    ),
+                                    child: Center(
+                                      child: SizedBox(
+                                        height: 24.h,
+                                        width: 24.w,
+                                        child: const CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
                                               ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Description",
-                      style: Theme.of(context).textTheme.headlineSmall!
-                          .copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        product.description,
-                        textAlign: TextAlign.left,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text.rich(
-                          TextSpan(
-                            text: "\$",
-                            style: Theme.of(context).textTheme.headlineSmall!
-                                .copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                            children: [
-                              TextSpan(
-                                text: "${product.price}",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium!
-                                    .copyWith(fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Spacer(),
-                        BlocBuilder<ProductCubit, ProductCubitState>(
-                          builder: (context, state) {
-                            if (state is AddToCartLoading) {
-                              return ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 25,
-                                    vertical: 15,
-                                  ),
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                ),
-                                onPressed: null,
-                                label: const CircularProgressIndicator.adaptive(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.add_shopping_cart_outlined,
-                                ),
-                              );
-                            } else if (state is AddToCartSuccess) {
-                              return ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 25,
-                                    vertical: 15,
-                                  ),
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                ),
-                                onPressed: null,
-                                label: const Text("Added"),
-                                icon: const Icon(Icons.check),
-                              );
-                            } else {
-                              return ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 25,
-                                    vertical: 15,
-                                  ),
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  if (BlocProvider.of<ProductCubit>(
+                                  );
+                                } else if (state is AddToCartSuccess) {
+                                  return Container(
+                                    height: 56.h,
+                                    decoration: BoxDecoration(
+                                      color: Colors.green,
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.green.withOpacity(0.3),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Colors.white,
+                                          size: 24.sp,
+                                        ),
+                                        SizedBox(width: 8.w),
+                                        Text(
+                                          "Added to Cart",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16.sp,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                return GestureDetector(
+                                  onTap: () {
+                                    if (BlocProvider.of<ProductCubit>(
+                                          context,
+                                        ).selectedSize ==
+                                        null) {
+                                      ScaffoldMessenger.of(
                                         context,
-                                      ).selectedSize ==
-                                      null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text("Please select a size"),
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: const Text(
+                                            "Please select a size",
+                                          ),
+                                          backgroundColor: Colors.red,
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10.r,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    BlocProvider.of<ProductCubit>(
+                                      context,
+                                    ).addToCart(product.id);
+                                  },
+                                  child: Container(
+                                    height: 56.h,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.deepPurple,
+                                          Colors.deepPurple.withOpacity(0.8),
+                                        ],
                                       ),
-                                    );
-                                    return;
-                                  }
-                                  BlocProvider.of<ProductCubit>(
-                                    context,
-                                  ).addToCart(product.id);
-                                },
-                                label: const Text("Add to Cart"),
-                                icon: const Icon(
-                                  Icons.add_shopping_cart_outlined,
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ],
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.deepPurple.withOpacity(
+                                            0.3,
+                                          ),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.shopping_cart_outlined,
+                                          color: Colors.white,
+                                          size: 24.sp,
+                                        ),
+                                        SizedBox(width: 8.w),
+                                        Text(
+                                          "Add to Cart",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16.sp,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

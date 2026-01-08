@@ -10,7 +10,6 @@ class ProductCubit extends Cubit<ProductCubitState> {
   ProductCubit() : super(ProductCubitInitial());
 
   final _productDetailsService = ProductDetailsServiceImpl();
-
   final authService = AuthServiceImpl();
 
   int quantity = 1;
@@ -20,19 +19,21 @@ class ProductCubit extends Cubit<ProductCubitState> {
     emit(ProductCubitLoading());
     try {
       final product = await _productDetailsService.getProductData(id);
+      // Reset quantity and size when loading a new product
+      quantity = 1;
+      selectedSize = null;
       emit(ProductCubitSuccess(product));
     } catch (e) {
       emit(ProductCubitError(e.toString()));
     }
-    /* Future.delayed((const Duration(seconds: 2)), () {
-      final product = dummyProducts.firstWhere((element) => element.id == id);
-      emit(ProductCubitSuccess(product));
-    });*/
   }
 
   void increment(String id) {
-    quantity++;
-    emit(QuantityCounterLoaded(quantity));
+    if (quantity < 99) {
+      // Add max limit
+      quantity++;
+      emit(QuantityCounterLoaded(quantity));
+    }
   }
 
   void selectSize(ProductSize size) {
@@ -41,13 +42,18 @@ class ProductCubit extends Cubit<ProductCubitState> {
   }
 
   void decrement(String id) {
-    quantity--;
-    emit(
-      quantity > 0 ? QuantityCounterLoaded(quantity) : QuantityCounterLoaded(0),
-    );
+    if (quantity > 1) {
+      quantity--;
+      emit(QuantityCounterLoaded(quantity));
+    }
   }
 
   Future<void> addToCart(String id) async {
+    if (selectedSize == null) {
+      emit(AddToCartFailure("Please select a size"));
+      return;
+    }
+
     emit(AddToCartLoading());
 
     try {
@@ -60,27 +66,28 @@ class ProductCubit extends Cubit<ProductCubitState> {
       );
 
       final currentUser = authService.getCurrentUser();
-      await _productDetailsService.addToCart(cart, currentUser!.uid);
+      if (currentUser == null) {
+        emit(AddToCartFailure("User not authenticated"));
+        return;
+      }
+
+      await _productDetailsService.addToCart(cart, currentUser.uid);
 
       emit(AddToCartSuccess(id));
+
+      // Reset after successful add to cart
+      Future.delayed(const Duration(seconds: 2), () {
+        quantity = 1;
+        selectedSize = null;
+        emit(ProductCubitSuccess(selectedProduct));
+      });
     } catch (e) {
       emit(AddToCartFailure(e.toString()));
-      print(e.toString());
     }
+  }
 
-    /*final cartItem = AddToCartModel(
-      selectedSize: selectedSize!,
-      id: DateTime.now().toString(),
-      quantity: quantity,
-      productId: dummyProducts.firstWhere((element) => element.id == id),
-    );
-    cartItems.add(cartItem);
-
-    Future.delayed(const Duration(seconds: 2), () {
-      emit(AddToCartSuccess(id));
-    });
-    */
+  void resetProduct() {
+    quantity = 1;
+    selectedSize = null;
   }
 }
-
-List<AddToCartModel> cartItems = [];

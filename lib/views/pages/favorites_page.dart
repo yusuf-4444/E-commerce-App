@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ecommerce_app/view_models.dart/favorite_cubit/favorite_cubit.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class FavoritesPage extends StatelessWidget {
   const FavoritesPage({super.key});
@@ -9,6 +11,7 @@ class FavoritesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = BlocProvider.of<FavoriteCubit>(context);
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       body: BlocBuilder<FavoriteCubit, FavoriteState>(
         bloc: cubit,
         buildWhen: (previous, current) =>
@@ -17,213 +20,235 @@ class FavoritesPage extends StatelessWidget {
             current is FavoriteLoading,
         builder: (context, state) {
           if (state is FavoriteLoading) {
-            return const Center(child: CircularProgressIndicator.adaptive());
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+              ),
+            );
           } else if (state is FavoriteSuccess) {
+            if (state.favoriteProducts.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.favorite_outline,
+                      size: 100.sp,
+                      color: Colors.grey[400],
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      "No Favorites Yet",
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      "Add items to your favorites",
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
             return RefreshIndicator(
               onRefresh: cubit.getFavorites,
+              color: Colors.deepPurple,
               child: ListView.builder(
+                padding: EdgeInsets.all(16.r),
                 itemCount: state.favoriteProducts.length,
                 itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Product Image
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                color: Colors.grey.shade100,
-                              ),
-                              child:
-                                  state
-                                      .favoriteProducts[index]
-                                      .imgUrl
-                                      .isNotEmpty
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Image.network(
-                                        state.favoriteProducts[index].imgUrl,
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                        loadingBuilder: (context, child, loadingProgress) {
-                                          if (loadingProgress == null) {
-                                            return child;
-                                          }
-                                          return Center(
+                  final product = state.favoriteProducts[index];
+                  return Container(
+                    margin: EdgeInsets.only(bottom: 16.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(12.r),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Product Image
+                          Container(
+                            width: 100.w,
+                            height: 100.h,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16.r),
+                              color: Colors.grey[100],
+                            ),
+                            child: product.imgUrl.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(16.r),
+                                    child: CachedNetworkImage(
+                                      imageUrl: product.imgUrl,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) =>
+                                          const Center(
                                             child: CircularProgressIndicator(
-                                              value:
-                                                  loadingProgress
-                                                          .expectedTotalBytes !=
-                                                      null
-                                                  ? loadingProgress
-                                                            .cumulativeBytesLoaded /
-                                                        loadingProgress
-                                                            .expectedTotalBytes!
-                                                  : null,
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    Colors.deepPurple,
+                                                  ),
                                             ),
-                                          );
-                                        },
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return const Center(
-                                            child: Icon(
-                                              Icons
-                                                  .image_not_supported_outlined,
-                                              color: Colors.grey,
-                                              size: 40,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    )
-                                  : const Center(
-                                      child: Icon(
-                                        Icons.image_outlined,
-                                        color: Colors.grey,
-                                        size: 40,
-                                      ),
-                                    ),
-                            ),
-
-                            const SizedBox(width: 16),
-
-                            // Product Information
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    state.favoriteProducts[index].name,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-
-                                  const SizedBox(height: 8),
-
-                                  Text(
-                                    '\$${state.favoriteProducts[index].price.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.green,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 8),
-
-                                  // Favorite badge
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.red.shade50,
-                                          borderRadius: BorderRadius.circular(
-                                            8,
                                           ),
-                                          border: Border.all(
-                                            color: Colors.red.shade100,
+                                      errorWidget: (context, error, stackTrace) {
+                                        return Center(
+                                          child: Icon(
+                                            Icons.image_not_supported_outlined,
+                                            color: Colors.grey,
+                                            size: 40.sp,
                                           ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.favorite,
-                                              color: Colors.red.shade400,
-                                              size: 14,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              'Favorite',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.red.shade400,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Delete button
-                            Column(
-                              children: [
-                                IconButton(
-                                  onPressed: () {
-                                    cubit.removeFavorites(
-                                      state.favoriteProducts[index],
-                                    );
-                                  },
-                                  icon: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red.shade50,
-                                      shape: BoxShape.circle,
+                                        );
+                                      },
                                     ),
+                                  )
+                                : Center(
                                     child: Icon(
-                                      Icons.delete_outline,
-                                      color: Colors.red.shade400,
-                                      size: 24,
+                                      Icons.image_outlined,
+                                      color: Colors.grey,
+                                      size: 40.sp,
                                     ),
+                                  ),
+                          ),
+                          SizedBox(width: 16.w),
+
+                          // Product Information
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  product.name,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  product.category,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: Colors.grey[600],
                                   ),
                                 ),
-                                const SizedBox(height: 16),
-                                // Optional: Add to cart or view details button
-                                OutlinedButton(
-                                  onPressed: () {
-                                    // Navigate to product details or add to cart
-                                  },
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
+                                SizedBox(height: 12.h),
+                                Row(
+                                  children: [
+                                    Text(
+                                      '\$${product.price.toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                        fontSize: 20.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.deepPurple,
+                                      ),
                                     ),
-                                    side: BorderSide(
-                                      color: Colors.blue.shade300,
+                                    const Spacer(),
+                                    // Rating Badge
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 8.w,
+                                        vertical: 4.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(
+                                          8.r,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.star,
+                                            color: Colors.amber,
+                                            size: 14.sp,
+                                          ),
+                                          SizedBox(width: 4.w),
+                                          Text(
+                                            product.averageRate.toString(),
+                                            style: TextStyle(
+                                              fontSize: 12.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Delete button
+                          Column(
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  cubit.removeFavorites(product);
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.all(8.r),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                    size: 20.sp,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 12.h),
+                              // View button
+                              GestureDetector(
+                                onTap: () {
+                                  // Navigate to product details
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w,
+                                    vertical: 6.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.deepPurple.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8.r),
                                   ),
                                   child: Text(
                                     'View',
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.blue.shade600,
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.deepPurple,
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -231,7 +256,23 @@ class FavoritesPage extends StatelessWidget {
               ),
             );
           } else if (state is FavoriteFaliure) {
-            return Center(child: Text(state.message));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 80.sp,
+                    color: Colors.red[300],
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(
+                    state.message,
+                    style: TextStyle(fontSize: 16.sp, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            );
           }
           return const SizedBox.shrink();
         },

@@ -11,6 +11,7 @@ import 'package:flutter_ecommerce_app/view_models.dart/auth_cubit/auth_cubit.dar
 import 'package:flutter_ecommerce_app/view_models.dart/category_cubit/category_cubit.dart';
 import 'package:flutter_ecommerce_app/view_models.dart/favorite_cubit/favorite_cubit.dart';
 import 'package:flutter_ecommerce_app/view_models.dart/home_cubit/home_cubit.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 Future<void> main() async {
   await initializeApp();
@@ -49,39 +50,47 @@ class CommerceApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => HomeCubit()..getHomeData()),
-        BlocProvider(create: (context) => AuthCubit()..checkAuth()),
-        BlocProvider(create: (context) => CategoryCubit()..getCategory()),
-        BlocProvider(create: (context) => FavoriteCubit()..getFavorites()),
-      ],
-      child: Builder(
-        builder: (context) {
-          return BlocBuilder<AuthCubit, AuthState>(
-            bloc: BlocProvider.of<AuthCubit>(context),
-            builder: (context, state) {
-              return MaterialApp(
-                debugShowCheckedModeBanner: false,
-                locale: DevicePreview.locale(context),
-                builder: DevicePreview.appBuilder,
-                darkTheme: ThemeData.dark(),
-                title: 'E-Commerce App',
-                theme: ThemeData(
-                  colorScheme: ColorScheme.fromSeed(
-                    seedColor: Colors.deepPurple,
-                  ),
-                  useMaterial3: true,
-                ),
-                initialRoute: state is AuthSuccess
-                    ? AppRoutes.homeRoute
-                    : AppRoutes.loginRoute,
-                onGenerateRoute: AppRouter.onGeneratedRoute,
+    return ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (context) => HomeCubit()..getHomeData()),
+            BlocProvider(create: (context) => AuthCubit()..checkAuth()),
+            BlocProvider(create: (context) => CategoryCubit()..getCategory()),
+            BlocProvider(create: (context) => FavoriteCubit()..getFavorites()),
+          ],
+          child: Builder(
+            builder: (context) {
+              return BlocBuilder<AuthCubit, AuthState>(
+                bloc: BlocProvider.of<AuthCubit>(context),
+                builder: (context, state) {
+                  return MaterialApp(
+                    debugShowCheckedModeBanner: false,
+                    locale: DevicePreview.locale(context),
+                    builder: DevicePreview.appBuilder,
+                    darkTheme: ThemeData.dark(),
+                    title: 'E-Commerce App',
+                    theme: ThemeData(
+                      colorScheme: ColorScheme.fromSeed(
+                        seedColor: Colors.deepPurple,
+                      ),
+                      useMaterial3: true,
+                      scaffoldBackgroundColor: Colors.grey[50],
+                    ),
+                    initialRoute: state is AuthSuccess
+                        ? AppRoutes.homeRoute
+                        : AppRoutes.loginRoute,
+                    onGenerateRoute: AppRouter.onGeneratedRoute,
+                  );
+                },
               );
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

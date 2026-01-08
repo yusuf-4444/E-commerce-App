@@ -7,6 +7,7 @@ import 'package:flutter_ecommerce_app/views/pages/cart_page.dart';
 import 'package:flutter_ecommerce_app/views/pages/favorites_page.dart';
 import 'package:flutter_ecommerce_app/views/pages/home_page.dart';
 import 'package:flutter_ecommerce_app/views/pages/profile_page.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart';
 
 class CustomNavbar extends StatefulWidget {
@@ -23,12 +24,25 @@ class _CustomNavbarState extends State<CustomNavbar> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            radius: 24,
-            backgroundImage: AssetImage(
-              Assets.assetsImagesUserProfilePNGFreeImage,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        shadowColor: Colors.grey.withOpacity(0.1),
+        toolbarHeight: 70.h,
+        leading: Padding(
+          padding: EdgeInsets.all(8.r),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.deepPurple.withOpacity(0.2),
+                width: 2,
+              ),
+            ),
+            child: CircleAvatar(
+              radius: 24.r,
+              backgroundImage: const AssetImage(
+                Assets.assetsImagesUserProfilePNGFreeImage,
+              ),
             ),
           ),
         ),
@@ -38,29 +52,32 @@ class _CustomNavbarState extends State<CustomNavbar> {
           children: [
             Text(
               "Yusuf Mohamed",
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16.sp,
+                color: Colors.black87,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
             Text(
               "Let's Go Shopping!",
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium!.copyWith(color: Colors.grey),
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w500,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
         actions: [
           if (index == 0) ...[
-            IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
-            IconButton(onPressed: () {}, icon: const Icon(Icons.notifications)),
+            _buildIconButton(Icons.search_rounded),
+            _buildIconButton(Icons.notifications_outlined),
           ] else if (index == 1)
-            IconButton(onPressed: () {}, icon: const Icon(Icons.shopping_cart)),
+            _buildIconButton(Icons.shopping_cart_outlined),
+          SizedBox(width: 8.w),
         ],
-        backgroundColor: Colors.transparent,
-        elevation: 0,
       ),
       body: PersistentTabView(
         onTabChanged: (value) => setState(() => index = value),
@@ -69,8 +86,10 @@ class _CustomNavbarState extends State<CustomNavbar> {
           PersistentTabConfig(
             screen: const HomePage(),
             item: ItemConfig(
-              icon: const Icon(CupertinoIcons.home),
+              icon: Icon(CupertinoIcons.home, size: 24.sp),
               title: "Home",
+              activeForegroundColor: Colors.deepPurple,
+              inactiveForegroundColor: Colors.grey.shade600,
             ),
           ),
           PersistentTabConfig(
@@ -79,27 +98,60 @@ class _CustomNavbarState extends State<CustomNavbar> {
               child: const CartPage(),
             ),
             item: ItemConfig(
-              icon: const Icon(CupertinoIcons.cart),
+              icon: Icon(CupertinoIcons.cart, size: 24.sp),
               title: "Cart",
+              activeForegroundColor: Colors.deepPurple,
+              inactiveForegroundColor: Colors.grey.shade600,
             ),
           ),
           PersistentTabConfig(
             screen: const FavoritesPage(),
             item: ItemConfig(
-              icon: const Icon(Icons.favorite),
+              icon: Icon(Icons.favorite_outline, size: 24.sp),
               title: "Favorites",
+              activeForegroundColor: Colors.deepPurple,
+              inactiveForegroundColor: Colors.grey.shade600,
             ),
           ),
           PersistentTabConfig(
             screen: const ProfilePage(),
             item: ItemConfig(
-              icon: const Icon(CupertinoIcons.profile_circled),
+              icon: Icon(CupertinoIcons.person, size: 24.sp),
               title: "Profile",
+              activeForegroundColor: Colors.deepPurple,
+              inactiveForegroundColor: Colors.grey.shade600,
             ),
           ),
         ],
-        navBarBuilder: (navBarConfig) =>
-            Style6BottomNavBar(navBarConfig: navBarConfig),
+        navBarBuilder: (navBarConfig) => Style6BottomNavBar(
+          navBarConfig: navBarConfig,
+          navBarDecoration: NavBarDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconButton(IconData icon) {
+    return Container(
+      margin: EdgeInsets.only(right: 8.w),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        onPressed: () {},
+        icon: Icon(icon, color: Colors.black87, size: 22.sp),
+        padding: EdgeInsets.all(8.r),
       ),
     );
   }

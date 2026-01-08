@@ -39,3 +39,29 @@ final class AuthenticateWithFacebookFailure extends AuthState {
   final String message;
   AuthenticateWithFacebookFailure(this.message);
 }
+
+// User Data States
+final class UserDataLoaded extends AuthState {
+  final UsersDataModel userData;
+  UserDataLoaded(this.userData);
+}
+
+final class UserDataLoading extends AuthState {}
+
+final class UserDataFailure extends AuthState {
+  final String message;
+  UserDataFailure(this.message);
+}
+
+// Update Profile States
+final class UpdateProfileLoading extends AuthState {}
+
+final class UpdateProfileSuccess extends AuthState {
+  final UsersDataModel userData;
+  UpdateProfileSuccess(this.userData);
+}
+
+final class UpdateProfileFailure extends AuthState {
+  final String message;
+  UpdateProfileFailure(this.message);
+}

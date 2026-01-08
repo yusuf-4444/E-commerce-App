@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ecommerce_app/models/product_item_model.dart';
 import 'package:flutter_ecommerce_app/utils/app_routes.dart';
 import 'package:flutter_ecommerce_app/view_models.dart/home_cubit/home_cubit.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CustomNewArrivalsGridViewBuilder extends StatelessWidget {
   const CustomNewArrivalsGridViewBuilder({
@@ -19,143 +20,246 @@ class CustomNewArrivalsGridViewBuilder extends StatelessWidget {
       onRefresh: () async {
         BlocProvider.of<HomeCubit>(context).getHomeData();
       },
+      color: Colors.deepPurple,
       child: GridView.builder(
         physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          mainAxisSpacing: 13,
+          mainAxisSpacing: 16.h,
+          crossAxisSpacing: 16.w,
+          childAspectRatio: 0.7,
         ),
         itemCount: dummyProducts1.length,
         itemBuilder: (context, index) {
-          return InkWell(
-            onTap: () {
-              Navigator.of(context, rootNavigator: true).pushNamed(
-                AppRoutes.productDetailsRoute,
-                arguments: dummyProducts1[index].id,
-              );
-            },
-            child: Column(
-              children: [
-                Stack(
-                  children: [
-                    SizedBox(
-                      height: 140,
-                      child: Container(
-                        width: 190,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(12),
+          return _buildProductCard(context, dummyProducts1[index]);
+        },
+      ),
+    );
+  }
+
+  Widget _buildProductCard(BuildContext context, ProductItemModel product) {
+    return InkWell(
+      onTap: () {
+        Navigator.of(
+          context,
+          rootNavigator: true,
+        ).pushNamed(AppRoutes.productDetailsRoute, arguments: product.id);
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(20.r),
+                        topRight: Radius.circular(20.r),
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(20.r),
+                        topRight: Radius.circular(20.r),
+                      ),
+                      child: CachedNetworkImage(
+                        imageUrl: product.imgUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.deepPurple,
+                            ),
+                          ),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: CachedNetworkImage(
-                            imageUrl: dummyProducts1[index].imgUrl,
-                            placeholder: (context, url) {
-                              return const Center(
-                                child: CircularProgressIndicator.adaptive(),
-                              );
-                            },
-                            errorWidget: (context, url, error) {
-                              return const Icon(Icons.error, color: Colors.red);
-                            },
+                        errorWidget: (context, url, error) => Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 32.sp,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 8.h,
+                    right: 8.w,
+                    child: _buildFavoriteButton(context, product),
+                  ),
+                  if (product.price < 15)
+                    Positioned(
+                      top: 8.h,
+                      left: 8.w,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Text(
+                          'Sale',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ),
-                    Positioned(
-                      top: 2,
-                      right: 1,
-                      child: DecoratedBox(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: EdgeInsets.all(12.r),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
+                            color: Colors.black87,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        child: BlocBuilder<HomeCubit, HomeState>(
-                          bloc: BlocProvider.of<HomeCubit>(context),
-                          buildWhen: (previous, current) =>
-                              (current is HomeFavoriteLoading &&
-                                  current.productID ==
-                                      dummyProducts1[index].id) ||
-                              (current is HomeFavoriteSuccess &&
-                                  current.productID ==
-                                      dummyProducts1[index].id) ||
-                              (current is HomeFavoriteFaliure &&
-                                  current.productID ==
-                                      dummyProducts1[index].id),
-                          builder: (context, state) {
-                            if (state is HomeFavoriteLoading) {
-                              return const Center(
-                                child: CircularProgressIndicator.adaptive(),
-                              );
-                            } else if (state is HomeFavoriteSuccess) {
-                              if (state.isFavorite) {
-                                return IconButton(
-                                  onPressed: () {
-                                    BlocProvider.of<HomeCubit>(
-                                      context,
-                                    ).setFavorite(dummyProducts1[index]);
-                                  },
-                                  icon: const Icon(
-                                    Icons.favorite_border_outlined,
-                                  ),
-                                );
-                              } else {
-                                return IconButton(
-                                  onPressed: () {
-                                    BlocProvider.of<HomeCubit>(
-                                      context,
-                                    ).setFavorite(dummyProducts1[index]);
-                                  },
-                                  icon: const Icon(
-                                    Icons.favorite,
-                                    color: Colors.red,
-                                  ),
-                                );
-                              }
-                            }
-                            return IconButton(
-                              onPressed: () {
-                                BlocProvider.of<HomeCubit>(
-                                  context,
-                                ).setFavorite(dummyProducts1[index]);
-                              },
-                              icon: dummyProducts1[index].isFavorite == true
-                                  ? const Icon(
-                                      Icons.favorite,
-                                      color: Colors.red,
-                                    )
-                                  : const Icon(Icons.favorite_border_outlined),
-                            );
-                          },
+                        SizedBox(height: 4.h),
+                        Text(
+                          product.category,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12.sp,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "\$${product.price.toStringAsFixed(2)}",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.sp,
+                            color: Colors.deepPurple,
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.all(6.r),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.add_shopping_cart,
+                            size: 16.sp,
+                            color: Colors.deepPurple,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                Text(
-                  dummyProducts1[index].name,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  dummyProducts1[index].category,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium!.copyWith(color: Colors.grey),
-                ),
-                Text(
-                  "\$${dummyProducts1[index].price}",
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFavoriteButton(BuildContext context, ProductItemModel product) {
+    return BlocBuilder<HomeCubit, HomeState>(
+      bloc: BlocProvider.of<HomeCubit>(context),
+      buildWhen: (previous, current) =>
+          (current is HomeFavoriteLoading && current.productID == product.id) ||
+          (current is HomeFavoriteSuccess && current.productID == product.id) ||
+          (current is HomeFavoriteFaliure && current.productID == product.id),
+      builder: (context, state) {
+        if (state is HomeFavoriteLoading) {
+          return Container(
+            padding: EdgeInsets.all(8.r),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
+            child: SizedBox(
+              height: 16.h,
+              width: 16.w,
+              child: const CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+              ),
+            ),
           );
-        },
-      ),
+        }
+
+        final isFavorite = state is HomeFavoriteSuccess
+            ? !state.isFavorite
+            : product.isFavorite;
+
+        return GestureDetector(
+          onTap: () {
+            BlocProvider.of<HomeCubit>(context).setFavorite(product);
+          },
+          child: Container(
+            padding: EdgeInsets.all(8.r),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: isFavorite ? Colors.red : Colors.grey[600],
+              size: 20.sp,
+            ),
+          ),
+        );
+      },
     );
   }
 }

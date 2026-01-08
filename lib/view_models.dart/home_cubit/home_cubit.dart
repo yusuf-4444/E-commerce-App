@@ -14,6 +14,9 @@ class HomeCubit extends Cubit<HomeState> {
   final AuthService _authService = AuthServiceImpl();
   final FavoriteServiceImpl _favoriteServiceImpl = FavoriteServiceImpl();
 
+  List<ProductItemModel> _cachedProducts = [];
+  List<HomeCarouselItemModel> _cachedCarousel = [];
+
   Future<void> getHomeData() async {
     emit(HomeLoading());
 
@@ -31,6 +34,9 @@ class HomeCubit extends Cubit<HomeState> {
         return product.copyWith(isFavorite: isFavorite);
       }).toList();
 
+      _cachedProducts = productsWithFavorite;
+      _cachedCarousel = homeCarousel;
+
       emit(
         HomeSuccess(
           homeCarouselItemModel: homeCarousel,
@@ -46,21 +52,62 @@ class HomeCubit extends Cubit<HomeState> {
     emit(HomeFavoriteLoading(productID: product.id));
     try {
       final currentUser = _authService.getCurrentUser();
+      if (currentUser == null) {
+        emit(
+          HomeFavoriteFaliure(message: "User not authenticated", product.id),
+        );
+        return;
+      }
+
       final favoriteItems = await _favoriteServiceImpl.getFavoriteProducts();
       final isFavorite = favoriteItems.any(
         (element) => element.id == product.id,
       );
+
       if (isFavorite) {
-        await _favoriteServiceImpl.removeFromFavorite(
-          currentUser!.uid,
-          product,
-        );
+        await _favoriteServiceImpl.removeFromFavorite(currentUser.uid, product);
       } else {
-        await _favoriteServiceImpl.addToFavorite(currentUser!.uid, product);
+        await _favoriteServiceImpl.addToFavorite(currentUser.uid, product);
       }
-      emit(HomeFavoriteSuccess(isFavorite: isFavorite, product.id));
+
+      // Update cached products
+      _cachedProducts = _cachedProducts.map((p) {
+        if (p.id == product.id) {
+          return p.copyWith(isFavorite: !isFavorite);
+        }
+        return p;
+      }).toList();
+
+      emit(HomeFavoriteSuccess(product.id, isFavorite: isFavorite));
+
+      // Emit updated home state with new favorite status
+      emit(
+        HomeSuccess(
+          homeCarouselItemModel: _cachedCarousel,
+          productItemModel: _cachedProducts,
+        ),
+      );
     } catch (e) {
       emit(HomeFavoriteFaliure(message: e.toString(), product.id));
+
+      // Restore previous state
+      if (_cachedProducts.isNotEmpty) {
+        emit(
+          HomeSuccess(
+            homeCarouselItemModel: _cachedCarousel,
+            productItemModel: _cachedProducts,
+          ),
+        );
+      }
     }
+  }
+
+  Future<void> refreshHome() async {
+    await getHomeData();
+  }
+
+  void clearCache() {
+    _cachedProducts = [];
+    _cachedCarousel = [];
   }
 }

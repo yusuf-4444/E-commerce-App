@@ -52,3 +52,23 @@ final class DecrementFailure extends CartState {
   final String message;
   DecrementFailure(this.message);
 }
+
+// Delete from cart states
+final class DeleteFromCartLoading extends CartState {}
+
+final class DeleteFromCartSuccess extends CartState {}
+
+final class DeleteFromCartFailure extends CartState {
+  final String message;
+  DeleteFromCartFailure(this.message);
+}
+
+// Clear cart states
+final class ClearCartLoading extends CartState {}
+
+final class ClearCartSuccess extends CartState {}
+
+final class ClearCartFailure extends CartState {
+  final String message;
+  ClearCartFailure(this.message);
+}
