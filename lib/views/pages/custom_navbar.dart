@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ecommerce_app/constants/assets.dart';
 import 'package:flutter_ecommerce_app/view_models.dart/cart_cubit/cart_cubit.dart';
+import 'package:flutter_ecommerce_app/view_models.dart/favorite_cubit/favorite_cubit.dart';
+import 'package:flutter_ecommerce_app/view_models.dart/home_cubit/home_cubit.dart';
 import 'package:flutter_ecommerce_app/views/pages/cart_page.dart';
 import 'package:flutter_ecommerce_app/views/pages/favorites_page.dart';
 import 'package:flutter_ecommerce_app/views/pages/home_page.dart';
@@ -19,6 +21,38 @@ class CustomNavbar extends StatefulWidget {
 
 class _CustomNavbarState extends State<CustomNavbar> {
   int index = 0;
+  late CartCubit _cartCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _cartCubit = CartCubit();
+  }
+
+  @override
+  void dispose() {
+    _cartCubit.close();
+    super.dispose();
+  }
+
+  void _onTabChanged(int newIndex) {
+    setState(() => index = newIndex);
+
+    // Refresh cart when switching to cart tab
+    if (newIndex == 1) {
+      _cartCubit.fetchCartItems();
+    }
+
+    // Refresh favorites when switching to favorites tab
+    if (newIndex == 2) {
+      BlocProvider.of<FavoriteCubit>(context).getFavorites();
+    }
+
+    // Refresh home when switching to home tab
+    if (newIndex == 0) {
+      BlocProvider.of<HomeCubit>(context).refreshHome();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +96,7 @@ class _CustomNavbarState extends State<CustomNavbar> {
             Text(
               "Let's Go Shopping!",
               style: TextStyle(
-                color: Colors.grey[600],
+                color: Colors.grey.shade600,
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w500,
               ),
@@ -80,7 +114,7 @@ class _CustomNavbarState extends State<CustomNavbar> {
         ],
       ),
       body: PersistentTabView(
-        onTabChanged: (value) => setState(() => index = value),
+        onTabChanged: _onTabChanged,
         stateManagement: true,
         tabs: [
           PersistentTabConfig(
@@ -93,8 +127,8 @@ class _CustomNavbarState extends State<CustomNavbar> {
             ),
           ),
           PersistentTabConfig(
-            screen: BlocProvider(
-              create: (context) => CartCubit()..fetchCartItems(),
+            screen: BlocProvider.value(
+              value: _cartCubit,
               child: const CartPage(),
             ),
             item: ItemConfig(

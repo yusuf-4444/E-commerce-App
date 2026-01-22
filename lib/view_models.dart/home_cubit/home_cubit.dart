@@ -109,5 +109,6 @@ class HomeCubit extends Cubit<HomeState> {
   void clearCache() {
     _cachedProducts = [];
     _cachedCarousel = [];
+    emit(HomeInitial());
   }
 }

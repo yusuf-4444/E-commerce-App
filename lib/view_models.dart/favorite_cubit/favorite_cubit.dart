@@ -35,4 +35,8 @@ class FavoriteCubit extends Cubit<FavoriteState> {
       emit(FavoriteDeleteFaliure(message: e.toString()));
     }
   }
+
+  void clearFavorites() {
+    emit(FavoriteInitial());
+  }
 }

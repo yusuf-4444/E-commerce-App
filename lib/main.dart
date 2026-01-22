@@ -51,41 +51,62 @@ class CommerceApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: const Size(375, 812),
+      designSize: const Size(375, 812), // iPhone 11 Pro size
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
         return MultiBlocProvider(
           providers: [
-            BlocProvider(create: (context) => HomeCubit()..getHomeData()),
             BlocProvider(create: (context) => AuthCubit()..checkAuth()),
-            BlocProvider(create: (context) => CategoryCubit()..getCategory()),
-            BlocProvider(create: (context) => FavoriteCubit()..getFavorites()),
+            BlocProvider(create: (context) => HomeCubit()),
+            BlocProvider(create: (context) => CategoryCubit()),
+            BlocProvider(create: (context) => FavoriteCubit()),
           ],
           child: Builder(
             builder: (context) {
-              return BlocBuilder<AuthCubit, AuthState>(
-                bloc: BlocProvider.of<AuthCubit>(context),
-                builder: (context, state) {
-                  return MaterialApp(
-                    debugShowCheckedModeBanner: false,
-                    locale: DevicePreview.locale(context),
-                    builder: DevicePreview.appBuilder,
-                    darkTheme: ThemeData.dark(),
-                    title: 'E-Commerce App',
-                    theme: ThemeData(
-                      colorScheme: ColorScheme.fromSeed(
-                        seedColor: Colors.deepPurple,
-                      ),
-                      useMaterial3: true,
-                      scaffoldBackgroundColor: Colors.grey[50],
-                    ),
-                    initialRoute: state is AuthSuccess
-                        ? AppRoutes.homeRoute
-                        : AppRoutes.loginRoute,
-                    onGenerateRoute: AppRouter.onGeneratedRoute,
-                  );
+              return BlocListener<AuthCubit, AuthState>(
+                listener: (context, state) {
+                  if (state is AuthSuccess ||
+                      state is AuthenticateWithGoogleSuccess ||
+                      state is AuthenticateWithFacebookSuccess) {
+                    BlocProvider.of<HomeCubit>(context).getHomeData();
+                    BlocProvider.of<CategoryCubit>(context).getCategory();
+                    BlocProvider.of<FavoriteCubit>(context).getFavorites();
+                  }
+
+                  if (state is LogoutSuccess) {
+                    BlocProvider.of<HomeCubit>(context).clearCache();
+                    BlocProvider.of<CategoryCubit>(
+                      context,
+                    ).emit(CategoryInitial());
+                    BlocProvider.of<FavoriteCubit>(
+                      context,
+                    ).emit(FavoriteInitial());
+                  }
                 },
+                child: BlocBuilder<AuthCubit, AuthState>(
+                  bloc: BlocProvider.of<AuthCubit>(context),
+                  builder: (context, state) {
+                    return MaterialApp(
+                      debugShowCheckedModeBanner: false,
+                      locale: DevicePreview.locale(context),
+                      builder: DevicePreview.appBuilder,
+                      darkTheme: ThemeData.dark(),
+                      title: 'E-Commerce App',
+                      theme: ThemeData(
+                        colorScheme: ColorScheme.fromSeed(
+                          seedColor: Colors.deepPurple,
+                        ),
+                        useMaterial3: true,
+                        scaffoldBackgroundColor: Colors.grey[50],
+                      ),
+                      initialRoute: state is AuthSuccess
+                          ? AppRoutes.homeRoute
+                          : AppRoutes.loginRoute,
+                      onGenerateRoute: AppRouter.onGeneratedRoute,
+                    );
+                  },
+                ),
               );
             },
           ),

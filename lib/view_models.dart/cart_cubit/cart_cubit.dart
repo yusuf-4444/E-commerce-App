@@ -56,25 +56,26 @@ class CartCubit extends Cubit<CartState> {
 
   Future<void> decrement(String id, [int? initialValue]) async {
     try {
-      emit(DecrementLoading(id));
-
       final cartItems = await cartServiceImpl.getCartItems();
       final index = cartItems.indexWhere(
         (element) => element.productId.id == id,
       );
+
       if (index == -1) {
         emit(CartFaliure("Product not found in cart"));
         return;
       }
-      final cartItem = cartItems[index];
 
-      int currentQuantity = initialValue ?? cartItem.quantity;
+      final cartItem = cartItems[index];
+      int currentQuantity = cartItem.quantity;
 
       // If quantity is 1, delete the item instead of decrementing
       if (currentQuantity <= 1) {
         await deleteFromCart(cartItem.id);
         return;
       }
+
+      emit(DecrementLoading(id));
 
       currentQuantity--;
       double currentPrice = cartItem.productId.price * currentQuantity;
@@ -85,6 +86,7 @@ class CartCubit extends Cubit<CartState> {
       await cartServiceImpl.decreaseQuantity(updatedCartItem);
 
       emit(QuantityCounterLoaded(currentQuantity, id, currentPrice));
+
       double totalPrice = cartItems.fold(
         0,
         (previousValue, element) =>
@@ -113,9 +115,15 @@ class CartCubit extends Cubit<CartState> {
       }
 
       final cartItem = cartItems[index];
-      int currentQuantity = initialValue ?? cartItem.quantity;
-      currentQuantity++;
+      int currentQuantity = cartItem.quantity;
 
+      // Add max limit
+      if (currentQuantity >= 99) {
+        emit(IncrementFailure("Maximum quantity reached"));
+        return;
+      }
+
+      currentQuantity++;
       double currentPrice = cartItem.productId.price * currentQuantity;
 
       final updatedCartItem = cartItem.copyWith(quantity: currentQuantity);
@@ -124,6 +132,7 @@ class CartCubit extends Cubit<CartState> {
       await cartServiceImpl.increaseQuantity(updatedCartItem);
 
       emit(QuantityCounterLoaded(currentQuantity, productId, currentPrice));
+
       double totalPrice = cartItems.fold(
         0,
         (previousValue, element) =>

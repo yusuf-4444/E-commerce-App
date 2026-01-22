@@ -184,8 +184,12 @@ class AuthCubit extends Cubit<AuthState> {
     emit(LogoutLoading());
 
     try {
-      await authService.logout();
+      // Clear user data first
       currentUserData = null;
+
+      // Logout from all services
+      await authService.logout();
+
       emit(LogoutSuccess());
     } catch (e) {
       emit(LogoutFailure(e.toString()));

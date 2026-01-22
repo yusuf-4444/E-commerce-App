@@ -13,9 +13,20 @@ class CategoryTabView extends StatelessWidget {
       buildWhen: (previous, current) =>
           current is CategorySuccess ||
           current is CategoryFailure ||
-          current is CategoryLoading,
+          current is CategoryLoading ||
+          current is CategoryInitial,
       builder: (context, state) {
-        if (state is CategoryFailure) {
+        if (state is CategoryInitial) {
+          // Load categories when entering this tab
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            BlocProvider.of<CategoryCubit>(context).getCategory();
+          });
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+            ),
+          );
+        } else if (state is CategoryFailure) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -30,7 +41,7 @@ class CategoryTabView extends StatelessWidget {
             ),
           );
         } else if (state is CategoryLoading) {
-          return const Center(
+          return Center(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
             ),
@@ -57,7 +68,7 @@ class CategoryTabView extends StatelessWidget {
                     BoxShadow(
                       color: category.bgColor.withOpacity(0.3),
                       blurRadius: 12,
-                      offset: const Offset(0, 6),
+                      offset: Offset(0, 6),
                     ),
                   ],
                 ),

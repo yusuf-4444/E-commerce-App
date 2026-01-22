@@ -18,40 +18,53 @@ class ProductDetailsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Column(
       children: [
-        // Image Section
+        // Image Section with proper height
         Container(
-          height: size.height * 0.45,
+          height: size.height * 0.4,
           width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.grey[200]!, Colors.grey[100]!],
-            ),
-          ),
+          color: Colors.grey[100],
           child: Hero(
             tag: 'product_${product.id}',
-            child: CachedNetworkImage(
-              imageUrl: product.imgUrl,
-              fit: BoxFit.contain,
-              placeholder: (context, url) => const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+            child: Padding(
+              padding: EdgeInsets.all(20.r),
+              child: CachedNetworkImage(
+                imageUrl: product.imgUrl,
+                fit: BoxFit.contain,
+                placeholder: (context, url) => const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.deepPurple,
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.image_not_supported,
+                        size: 60.sp,
+                        color: Colors.grey,
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'Image not available',
+                        style: TextStyle(color: Colors.grey, fontSize: 14.sp),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
 
-        // Bottom Sheet
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
+        // Details Section - Scrollable
+        Expanded(
           child: Container(
-            height: size.height * 0.58,
+            width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
@@ -64,6 +77,7 @@ class ProductDetailsBody extends StatelessWidget {
               ],
             ),
             child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               child: Padding(
                 padding: EdgeInsets.all(24.r),
                 child: Column(
@@ -251,183 +265,8 @@ class ProductDetailsBody extends StatelessWidget {
                         color: Colors.grey[600],
                         height: 1.5,
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 30.h),
-
-                    // Price and Add to Cart
-                    Container(
-                      padding: EdgeInsets.all(16.r),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(16.r),
-                      ),
-                      child: Row(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Total Price",
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              SizedBox(height: 4.h),
-                              Text(
-                                "\$${product.price.toStringAsFixed(2)}",
-                                style: TextStyle(
-                                  fontSize: 28.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.deepPurple,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(width: 16.w),
-                          Expanded(
-                            child: BlocBuilder<ProductCubit, ProductCubitState>(
-                              builder: (context, state) {
-                                if (state is AddToCartLoading) {
-                                  return Container(
-                                    height: 56.h,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.deepPurple,
-                                          Colors.deepPurple.withOpacity(0.8),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(16.r),
-                                    ),
-                                    child: Center(
-                                      child: SizedBox(
-                                        height: 24.h,
-                                        width: 24.w,
-                                        child: const CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                Colors.white,
-                                              ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                } else if (state is AddToCartSuccess) {
-                                  return Container(
-                                    height: 56.h,
-                                    decoration: BoxDecoration(
-                                      color: Colors.green,
-                                      borderRadius: BorderRadius.circular(16.r),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.green.withOpacity(0.3),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 6),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.check_circle,
-                                          color: Colors.white,
-                                          size: 24.sp,
-                                        ),
-                                        SizedBox(width: 8.w),
-                                        Text(
-                                          "Added to Cart",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16.sp,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }
-                                return GestureDetector(
-                                  onTap: () {
-                                    if (BlocProvider.of<ProductCubit>(
-                                          context,
-                                        ).selectedSize ==
-                                        null) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: const Text(
-                                            "Please select a size",
-                                          ),
-                                          backgroundColor: Colors.red,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              10.r,
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                    BlocProvider.of<ProductCubit>(
-                                      context,
-                                    ).addToCart(product.id);
-                                  },
-                                  child: Container(
-                                    height: 56.h,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.deepPurple,
-                                          Colors.deepPurple.withOpacity(0.8),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(16.r),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.deepPurple.withOpacity(
-                                            0.3,
-                                          ),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 6),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.shopping_cart_outlined,
-                                          color: Colors.white,
-                                          size: 24.sp,
-                                        ),
-                                        SizedBox(width: 8.w),
-                                        Text(
-                                          "Add to Cart",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16.sp,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    SizedBox(height: 100.h), // Space for bottom button
                   ],
                 ),
               ),
